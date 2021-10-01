@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: sample-pipeline-
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.0.0, pipelines.kubeflow.org/pipeline_compilation_time: '2020-12-15T10:15:15.842840',
+    pipelines.kubeflow.org/pipeline_spec: '{"name": "Sample pipeline"}'}
+  labels: {pipelines.kubeflow.org/kfp_sdk_version: 1.0.0}
+spec:
+  entrypoint: sample-pipeline
+  templates:
+  - name: sample-pipeline
+    dag:
+      tasks:
+      - {name: sample-test, template: sample-test}
+  - name: sample-test
+    container:
+      args: []
+      command:
+      - python3
+      - -u
+      - -c
+      - |
+        def sample_test():
+            import datetime
+            import time
+
+            tstep = datetime.timedelta(seconds=1)
+            tnext = datetime.datetime.now() + tstep
+            i = 0
+            while i < 5:
+                print("sample test: " +  str(i) )
+                tdiff = tnext - datetime.datetime.now()
+                time.sleep(tdiff.total_seconds())
+                tnext = tnext + tstep
+                i += 1
+
+        import argparse
+        _parser = argparse.ArgumentParser(prog='sample test', description='')
+        _parsed_args = vars(_parser.parse_args())
+
+        _outputs = sample_test(**_parsed_args)
+      image: python:3.7
+  arguments:
+    parameters: []
+  serviceAccountName: pipeline-runner
